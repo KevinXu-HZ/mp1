@@ -1,0 +1,10 @@
+{
+    "x_dim": 0,
+    "y_dim": 1,
+    "z_dim": 2,
+    "speed": 99999,
+    "node_batch": false,
+    "save": false,
+    "log_file": "demo1_10_1_001_no_branching_sim.txt",
+    "noise": false
+}
