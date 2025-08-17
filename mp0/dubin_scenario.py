@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # # ----------- Different initial ranges -------------
     #R1:
     ownship_aircraft = [[-4100, -5000, 0, 120], [-3100, -4950, 0, 120]]
-    intruder_aircraft =[[-1400, 1500, -np.pi/2, 100], [-1200, 2000, -np.pi/2, 100]]
+    intruder_aircraft =[[-1450, 1500, -np.pi/2, 100], [-1250, 2000, -np.pi/2, 100]]
 
 
     #R2
