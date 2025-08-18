@@ -33,8 +33,73 @@ def eval_safety(tree_list: List[AnalysisTree]):
     
     return unsafe_init
 
+def is_refine_complete(ownship_init: List[float], intruder_init: List[float], ownship_partitions: List[float], intruder_partitions: List[float]):
+    from z3 import Solver, Real, And, Or, Not, sat, unsat
+    
+    combined_init_lower = ownship_init[0] + intruder_init[0]  # concatenate lower bounds
+    combined_init_upper = ownship_init[1] + intruder_init[1]  # concatenate upper bounds
+    
+    big_rect = np.array([combined_init_lower, combined_init_upper])
+    
+    combined_partitions = []
+    for own_partition in ownship_partitions:
+        for intruder_partition in intruder_partitions:
+            combined_lower = own_partition[0] + intruder_partition[0]
+            combined_upper = own_partition[1] + intruder_partition[1]
+            combined_partitions.append([combined_lower, combined_upper])
+    
+    if not combined_partitions:
+        return False
+    
+    small_rects = np.array(combined_partitions)
+    
+    def check_coverage(small_rects: np.ndarray, big_rect: np.ndarray) -> bool:
+        if not (small_rects.ndim == 3 and small_rects.shape[1] == 2 and
+                big_rect.ndim == 2 and big_rect.shape[0] == 2 and
+                small_rects.shape[2] == big_rect.shape[1]):
+            raise ValueError("Input arrays have incorrect shapes. Expected (K, 2, N) and (2, N).")
 
+        K, _, N = small_rects.shape
 
+        if K == 0:
+            return False
+
+        solver = Solver()
+
+        p = [Real(f'p_{i}') for i in range(N)]
+
+        
+        in_big_rect_conds = []
+        for i in range(N):
+            in_big_rect_conds.append(p[i] >= big_rect[0, i])
+            in_big_rect_conds.append(p[i] <= big_rect[1, i])
+        
+        solver.add(And(in_big_rect_conds))
+
+       
+        in_any_small_rect_conds = []
+        for k in range(K):
+            in_small_k_conds = []
+            for i in range(N):
+                in_small_k_conds.append(p[i] >= small_rects[k, 0, i])
+                in_small_k_conds.append(p[i] <= small_rects[k, 1, i])
+            
+            in_any_small_rect_conds.append(And(in_small_k_conds))
+
+        in_union = Or(in_any_small_rect_conds)
+
+        solver.add(Not(in_union))
+
+        result = solver.check()
+
+        if result == unsat:
+            return True
+        elif result == sat:
+            return False
+        else:
+            raise RuntimeError(f"Z3 solver returned an unknown status: {result}")
+    
+    return check_coverage(small_rects, big_rect)
 
 def tree_safe(tree: AnalysisTree):
     for node in tree.nodes:
