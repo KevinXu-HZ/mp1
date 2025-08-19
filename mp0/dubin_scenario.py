@@ -24,15 +24,13 @@ def verify_refine(scenario : Scenario, ownship_aircraft_init : List[float], intr
     final_traces = []
    
     #Each partition of the initial set included in your final output must be appended to partitions lists
-    final_ownship_partitions =[]
-    final_intruder_partitions =[] 
+    partitions =[]
 
     # Example: 
     # trace = scenario.verify( modified own init, modified intruder init, time_horizon, time_step, ax=ax) 
     # if tree_safe(trace): 
     #   final_traces.append(trace)
-    #   final_ownship_partitions.append(modified own init)
-    #   final_intruder_partitions.append(modified intruder init)
+    #   partitions.append( (modified own init, modified intruder init) )
     # else:
     #   ....
 
@@ -42,10 +40,9 @@ def verify_refine(scenario : Scenario, ownship_aircraft_init : List[float], intr
    
 
     #########################################################
-    print(final_ownship_partitions)
-    print(final_intruder_partitions)
 
-    assert is_refine_complete(ownship_aircraft_init, intruder_aircraft_init, final_ownship_partitions, final_intruder_partitions)
+
+    assert is_refine_complete(ownship_aircraft_init, intruder_aircraft_init, partitions)
 
 
     return final_traces

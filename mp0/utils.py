@@ -1,6 +1,6 @@
 
 from verse.analysis.analysis_tree import AnalysisTree 
-from typing import List
+from typing import List, Tuple
 import numpy as np
 
 class bcolors:
@@ -33,7 +33,7 @@ def eval_safety(tree_list: List[AnalysisTree]):
     
     return unsafe_init
 
-def is_refine_complete(ownship_init: List[float], intruder_init: List[float], ownship_partitions: List[float], intruder_partitions: List[float]):
+def is_refine_complete(ownship_init: List[float], intruder_init: List[float], partitions: Tuple[List[float], List[float]]):
     from z3 import Solver, Real, And, Or, Not, sat, unsat
     
     combined_init_lower = ownship_init[0] + intruder_init[0]  # concatenate lower bounds
@@ -42,11 +42,10 @@ def is_refine_complete(ownship_init: List[float], intruder_init: List[float], ow
     big_rect = np.array([combined_init_lower, combined_init_upper])
     
     combined_partitions = []
-    for own_partition in ownship_partitions:
-        for intruder_partition in intruder_partitions:
-            combined_lower = own_partition[0] + intruder_partition[0]
-            combined_upper = own_partition[1] + intruder_partition[1]
-            combined_partitions.append([combined_lower, combined_upper])
+    for own_partition, intruder_partition in partitions:
+        combined_lower = own_partition[0] + intruder_partition[0]
+        combined_upper = own_partition[1] + intruder_partition[1]
+        combined_partitions.append([combined_lower, combined_upper])
     
     if not combined_partitions:
         return False
