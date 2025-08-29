@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     #R2
     # ownship_aircraft_init = [[-2200, -2000, -np.pi/2, 120], [-1200, -950, -np.pi/2, 120]]
-    # ownship_aircraft_init =[[-100, 1500, (-3 * np.pi/4) +1.4, 100], [100, 2000, (-np.pi/12) + 1.4, 100]]
+    # intruder_aircraft_init =[[-100, 1500, (-3 * np.pi/4) +1.4, 100], [100, 2000, (-np.pi/12) + 1.4, 100]]
 
 
     # #R3
