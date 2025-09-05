@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <!-- Launch Gazebo with the world -->
+  <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">
+    <arg name="world" value="$(find-pkg-share gem_gazebo)/worlds/smaller_track.world"/>
+    <arg name="debug" value="$(var debug)" />
+    <arg name="gui" value="$(var gui)" />
+    <arg name="pause" value="$(var paused)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="headless" value="$(var headless)"/>
+    <arg name="verbose" value="false"/>
+  </include>
+
+  <!-- Spawn the GEM CAR -->
+  <include file="$(find-pkg-share gem_gazebo)/launch/gem_vehicle.launch">
+    <arg name="x" value="0.0"/>
+    <arg name="y" value="-98"/>
+    <arg name="z" value="1.0"/>
+  </include>
+
+  <!-- RViz -->
+  <node pkg="rviz2" exec="rviz2" name="rviz" args="-d $(find-pkg-share mp1)/config/mp1.rviz" />
+
+</launch> 

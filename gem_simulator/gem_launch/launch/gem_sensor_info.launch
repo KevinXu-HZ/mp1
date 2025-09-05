@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node pkg="gem_gazebo" exec="gem_sensor_info.py" name="gem_sensor_info"/>
+
+</launch>
