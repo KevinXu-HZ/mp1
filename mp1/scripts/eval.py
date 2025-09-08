@@ -24,8 +24,7 @@ class ModelEvaluationService(Node):
         super().__init__('model_evaluation_service')
         
         # Declare parameters
-        self.declare_parameter('dataset_path', 
-                              os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/dataset"))
+        self.declare_parameter('dataset_path', "data/dataset")
         self.declare_parameter('checkpoint_path', "checkpoints/simple_enet_checkpoint_epoch_40.pth")
         self.declare_parameter('batch_size', 10)
         self.declare_parameter('use_wandb', True)
