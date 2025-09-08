@@ -11,10 +11,10 @@ class SimpleLaneDataset(Dataset):
         
         Args:
             dataset_path (str): Path to the dataset directory
-            mode (str): 'train' or 'test'
+            mode (str): 'train', 'test', or 'val'
             size (tuple): (width, height) for resizing images
         """
-        assert mode in ["train", "test"], "Mode must be 'train' or 'test'"
+        assert mode in ["train", "test", "val"], "Mode must be 'train', 'test', or 'val'"
         
         self.dataset_path = os.path.join(dataset_path, mode)
         self.mode = mode

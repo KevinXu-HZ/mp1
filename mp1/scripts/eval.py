@@ -25,8 +25,8 @@ class ModelEvaluationService(Node):
         
         # Declare parameters
         self.declare_parameter('dataset_path', 
-                              os.path.join(os.path.dirname(os.path.realpath(__file__)), "dataset"))
-        self.declare_parameter('checkpoint_path', "checkpoints/simple_enet_checkpoint_epoch_20.pth")
+                              os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/dataset"))
+        self.declare_parameter('checkpoint_path', "checkpoints/simple_enet_checkpoint_epoch_40.pth")
         self.declare_parameter('batch_size', 10)
         self.declare_parameter('use_wandb', True)
         
@@ -72,9 +72,9 @@ class ModelEvaluationService(Node):
                 response.message = error_msg
                 return response
 
-            val_dataset = SimpleLaneDataset(self.dataset_path, mode="test")
+            val_dataset = SimpleLaneDataset(self.dataset_path, mode="val")
             val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4)
-            self.get_logger().info(f"Loaded dataset with {len(val_dataset)} test samples")
+            self.get_logger().info(f"Loaded dataset with {len(val_dataset)} val samples")
 
             # Load model
             if not os.path.exists(self.checkpoint_path):
