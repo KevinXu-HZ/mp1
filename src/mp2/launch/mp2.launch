@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find gem_gazebo)/worlds/smaller_track_with_starting_point_new.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="verbose" value="false"/>
+  </include>
+
+
+  <!-- Spawn the GEM CAR -->
+  <include file="$(find gem_gazebo)/launch/gem_vehicle.launch">
+    <!-- <arg name="namespace" value="/gem"/> -->
+    <arg name="x" value="0.0"/>
+    <arg name="y" value="-98"/>
+    <arg name="z" value="1.0"/>
+  </include>
+
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find gem_description)/config_rviz/gem_velodyne.rviz" />
+
+</launch>

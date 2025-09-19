@@ -20,6 +20,7 @@ def process_dataset(image_dir: str = "data/raw_images/", output_dir: str = "data
     test_dir = os.path.join(output_dir, 'test')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if not os.path.exists(train_dir):
         os.makedirs(train_dir, exist_ok=True)
         os.makedirs(test_dir, exist_ok=True)
     # prepare all image files
