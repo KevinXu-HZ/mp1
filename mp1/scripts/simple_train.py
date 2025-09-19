@@ -17,9 +17,9 @@ from datasets.simple_lane_dataset import SimpleLaneDataset
 
 # Configurations
 ##### YOUR CODE STARTS HERE #####
-BATCH_SIZE = 
-LR = 
-EPOCHS = 
+BATCH_SIZE = 8
+LR = 0.001
+EPOCHS = 50
 ##### YOUR CODE ENDS HERE #####
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATASET_PATH = "data/dataset"
@@ -74,7 +74,7 @@ def train():
     # Model and optimizer initialization
     model = SimpleENet(num_classes=2).to(DEVICE)
     ##### YOUR CODE STARTS HERE #####
-   
+    optimizer = Adam(model.parameters(), lr=LR)
     ##### YOUR CODE ENDS HERE #####
     
 
@@ -111,12 +111,19 @@ def train():
             ##### YOUR CODE STARTS HERE #####
 
             # Move data to device
-          
+            images = images.to(DEVICE)
+            segmentation_labels = segmentation_labels.to(DEVICE)
+            
             # Forward pass
-             
+            outputs = model(images)
+            
             # Compute loss
-          
+            loss = F.cross_entropy(outputs, segmentation_labels)
+            
             # Backward pass and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
    
             ##### YOUR CODE ENDS HERE #####
             
