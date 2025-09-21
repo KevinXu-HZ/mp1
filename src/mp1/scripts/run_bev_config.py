@@ -41,7 +41,27 @@ def main():
     src = []
     for pt in bev_world_coords:
         ##### YOUR CODE STARTS HERE #####
+        # First step: use extrinsic matrix to convert from world frame to camera frame
+        M_ext = np.array([
+            [R[0,0], R[0,1], R[0,2], t[0]],
+            [R[1,0], R[1,1], R[1,2], t[1]],
+            [R[2,0], R[2,1], R[2,2], t[2]],
+            [0,      0,      0,       1  ]
+        ])
+        pt = np.append(pt, 1)
+        pt = pt.reshape(-1, 1) # make pt a 4*1 matrix
+        bev_camera_coords = M_ext @ pt
 
+        #Second step: use intrinsic matrix to convert from camera frame to pixel coordinates
+        M_int = np.array([
+            [K[0,0], K[0,1], K[0,2], 0],
+            [K[1,0], K[1,1], K[1,2], 0],
+            [K[2,0], K[2,1], K[2,2], 0],
+        ])
+        pixel_coord = M_int @ bev_camera_coords
+        u = pixel_coord[0,0]/pixel_coord[2,0]
+        v = pixel_coord[1,0]/pixel_coord[2,0]
+        src.append([u, v])
         ##### YOUR CODE ENDS HERE #####
         pass
     src = np.float32(src)
