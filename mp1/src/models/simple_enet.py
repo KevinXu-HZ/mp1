@@ -20,12 +20,24 @@ class InitialBlock(nn.Module):
             4. Concatenate $f_1$ and $f_2$ along the second dimension (axis=1)--> Batch Norm --> Activation --> Output with the shape of (out_channels, 192, 320)
         """
         ##### YOUR CODE STARTS HERE #####
-        
+        # Convolution Layer
+        self.layer1 = nn.Conv2d(in_channels, out_channels-1, kernel_size = 3, stride = 1, padding = 1, bias = bias)
+        # Maxpooling Layer
+        self.layer2 = nn.MaxPool2d(kernel_size = 3, stride = 1, padding = 1)
+        # Batch Norm
+        self.batchnorm = nn.BatchNorm2d(out_channels)
         ##### YOUR CODE ENDS HERE #####
         
     def forward(self, x):
         ##### YOUR CODE STARTS HERE #####
-        
+        f1 = self.layer1(x)
+        f2 = self.layer2(f1)
+        # Concatenate f1 and f2 along the second dimension
+        concatenated = torch.cat((f1, f2), dim = 1)
+        normed = self.batchnorm(concatenated)
+        output = activation(normed)
+        return output
+ 
         ##### YOUR CODE ENDS HERE #####
 
 class RegularBottleneck(nn.Module):
