@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 import torch
 import json
 import numpy as np
+import cv2
 
 import rclpy
 from rclpy.node import Node
@@ -157,7 +158,12 @@ class LaneVisualizer(Node):
         img_normalized = None
 
         ##### Your code starts here #####
-        
+        # Step 1: Resize incoming BGR image to the network's expected resolution (width, height)
+        img_resized = cv2.resize(img, (640, 384), interpolation=cv2.INTER_LINEAR)
+
+        # Step 2: Convert to grayscale and normalize to [0, 1] float32 just like during training
+        img_grayscale = cv2.cvtColor(img_resized, cv2.COLOR_BGR2GRAY)
+        img_normalized = img_grayscale.astype(np.float32) / 255.0
         ##### Your code ends here #####
 
         # Step 3: Convert to tensor and add channel/batch dimension
@@ -171,7 +177,12 @@ class LaneVisualizer(Node):
         binary_output = pred_mask.squeeze().cpu().numpy().astype(np.uint8) * 255
 
         ##### Your code starts here #####
-
+        # Step 5: Resize the binary mask back to the original image dimensions for downstream use
+        binary_output = cv2.resize(
+            binary_output,
+            (img.shape[1], img.shape[0]),
+            interpolation=cv2.INTER_NEAREST,
+        )
         ##### Your code ends here #####
 
         return binary_output
