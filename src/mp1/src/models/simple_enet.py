@@ -21,24 +21,23 @@ class InitialBlock(nn.Module):
         """
         ##### YOUR CODE STARTS HERE #####
         # Convolution Layer
-        self.layer1 = nn.Conv2d(in_channels, out_channels-1, kernel_size=3, stride=2, padding=1, bias=bias)
+        self.layer1 = nn.Conv2d(in_channels, out_channels-1, kernel_size = 3, stride = 1, padding = 1, bias = bias)
         # Maxpooling Layer
-        self.layer2 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+        self.layer2 = nn.MaxPool2d(kernel_size = 3, stride = 1, padding = 1)
         # Batch Norm
         self.batchnorm = nn.BatchNorm2d(out_channels)
-        # Activation function
-        self.activation = activation()
         ##### YOUR CODE ENDS HERE #####
         
     def forward(self, x):
         ##### YOUR CODE STARTS HERE #####
         f1 = self.layer1(x)
-        f2 = self.layer2(x)  # Apply maxpool to original input, not f1
+        f2 = self.layer2(f1)
         # Concatenate f1 and f2 along the second dimension
-        concatenated = torch.cat((f1, f2), dim=1)
+        concatenated = torch.cat((f1, f2), dim = 1)
         normed = self.batchnorm(concatenated)
-        output = self.activation(normed)
+        output = activation(normed)
         return output
+ 
         ##### YOUR CODE ENDS HERE #####
 
 class RegularBottleneck(nn.Module):
