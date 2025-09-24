@@ -4,12 +4,10 @@ import torch.nn as nn
 class InitialBlock(nn.Module):
     def __init__(self, in_channels, out_channels, bias=False, relu=True):
         super().__init__()
-
         if relu:
             activation = nn.ReLU
         else:
             activation = nn.PReLU
-
         """
         Build the InitialBlock with correct configuration
 
@@ -20,10 +18,11 @@ class InitialBlock(nn.Module):
             4. Concatenate $f_1$ and $f_2$ along the second dimension (axis=1)--> Batch Norm --> Activation --> Output with the shape of (out_channels, 192, 320)
         """
         ##### YOUR CODE STARTS HERE #####
+        self.activation = activation() 
         # Convolution Layer
-        self.layer1 = nn.Conv2d(in_channels, out_channels-1, kernel_size = 3, stride = 1, padding = 1, bias = bias)
+        self.layer1 = nn.Conv2d(in_channels, out_channels-1, kernel_size = 3, stride = 2, padding = 1, bias = bias)
         # Maxpooling Layer
-        self.layer2 = nn.MaxPool2d(kernel_size = 3, stride = 1, padding = 1)
+        self.layer2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
         # Batch Norm
         self.batchnorm = nn.BatchNorm2d(out_channels)
         ##### YOUR CODE ENDS HERE #####
@@ -31,11 +30,11 @@ class InitialBlock(nn.Module):
     def forward(self, x):
         ##### YOUR CODE STARTS HERE #####
         f1 = self.layer1(x)
-        f2 = self.layer2(f1)
+        f2 = self.layer2(x)
         # Concatenate f1 and f2 along the second dimension
         concatenated = torch.cat((f1, f2), dim = 1)
         normed = self.batchnorm(concatenated)
-        output = activation(normed)
+        output = self.activation(normed)
         return output
  
         ##### YOUR CODE ENDS HERE #####
