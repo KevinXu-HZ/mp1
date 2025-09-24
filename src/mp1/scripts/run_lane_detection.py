@@ -244,7 +244,7 @@ def main(args=None):
     )
     
     try:
-        visualizer = LaneVisualizer(ckpt_fn=default_ckpt, debug=False)
+        visualizer = LaneVisualizer(ckpt_fn=default_ckpt)
         rclpy.spin(visualizer)
     except KeyboardInterrupt:
         pass
