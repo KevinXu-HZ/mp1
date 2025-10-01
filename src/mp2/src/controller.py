@@ -87,11 +87,86 @@ class vehicleController():
     def pure_pursuit_lateral_controller(self, curr_x, curr_y, curr_yaw, target_point, future_unreached_waypoints):
        
         ####################### TODO: Your TASK 3 code starts Here #######################
-        target_steering = 0
+        # Pure Pursuit Algorithm Implementation
+        # Using method 2: Set a constant lookahead distance and interpolate between future waypoints
+        
+        # Lookahead distance (can be tuned for better performance)
+        lookahead_distance = 8.0
+        
+        # Find the lookahead point
+        lookahead_point = self._find_lookahead_point(curr_x, curr_y, target_point, future_unreached_waypoints, lookahead_distance)
+        
+        if lookahead_point is None:
+            # Fallback to target point if no lookahead point found
+            lookahead_point = target_point
+        
+        # Calculate the angle between vehicle heading and lookahead line
+        dx = lookahead_point[0] - curr_x
+        dy = lookahead_point[1] - curr_y
+        
+        # Calculate the angle from vehicle to lookahead point
+        alpha = math.atan2(dy, dx) - curr_yaw
+        
+        # Normalize angle to [-pi, pi]
+        while alpha > math.pi:
+            alpha -= 2 * math.pi
+        while alpha < -math.pi:
+            alpha += 2 * math.pi
+        
+        # Calculate lookahead distance
+        ld = math.sqrt(dx**2 + dy**2)
+        
+        # Pure Pursuit formula: δ = arctan(2L*sin(α)/ld)
+        if ld > 0.1:  # Avoid division by zero
+            target_steering = math.atan(2 * self.L * math.sin(alpha) / ld)
+        else:
+            target_steering = 0.0
+        
+        # Limit steering angle to reasonable bounds (typically ±30 degrees)
+        max_steering = math.radians(30)
+        target_steering = max(-max_steering, min(max_steering, target_steering))
 
-        ####################### TODO: Your TASK 3 code starts Here #######################
+        ####################### TODO: Your TASK 3 code ends Here #######################
         return target_steering
-       
+    
+    def _find_lookahead_point(self, curr_x, curr_y, target_point, future_waypoints, lookahead_distance):
+        """
+        Find the lookahead point using constant lookahead distance.
+        Interpolates between waypoints to find the exact point at lookahead_distance.
+        """
+        # Start with the target point and future waypoints
+        all_waypoints = [target_point] + future_waypoints
+        
+        if len(all_waypoints) < 2:
+            return target_point
+        
+        # Find the segment that contains the lookahead point
+        cumulative_distance = 0.0
+        prev_point = [curr_x, curr_y]
+        
+        for i, waypoint in enumerate(all_waypoints):
+            # Calculate distance to current waypoint
+            dx = waypoint[0] - prev_point[0]
+            dy = waypoint[1] - prev_point[1]
+            segment_distance = math.sqrt(dx**2 + dy**2)
+            
+            # Check if lookahead point is in this segment
+            if cumulative_distance + segment_distance >= lookahead_distance:
+                # Interpolate within this segment
+                remaining_distance = lookahead_distance - cumulative_distance
+                if segment_distance > 0:
+                    ratio = remaining_distance / segment_distance
+                    lookahead_x = prev_point[0] + ratio * dx
+                    lookahead_y = prev_point[1] + ratio * dy
+                    return [lookahead_x, lookahead_y]
+                else:
+                    return waypoint
+            
+            cumulative_distance += segment_distance
+            prev_point = waypoint
+        
+        # If we've gone through all waypoints, return the last one
+        return all_waypoints[-1]
 
 
 
