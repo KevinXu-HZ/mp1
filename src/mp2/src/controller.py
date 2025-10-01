@@ -38,12 +38,34 @@ class vehicleController():
      
     def extract_vehicle_info(self, currentPose):
 
-        ####################### TODO: Your TASK 1 code starts Here #######################
-        pos_x, pos_y, vel, yaw = 0, 0, 0, 0
+    ####################### TODO: Your TASK 1 code starts Here #######################
+    pos_x, pos_y, vel, yaw = 0, 0, 0, 0
+    if currentPose.success:
+        print("gem found")
 
-        ####################### TODO: Your Task 1 code ends Here #######################
+        # get pos_x and pos_y
+        point = currentPose.state.pose.position
+        pos_x = point.x
+        pos_y = point.y
 
-        return pos_x, pos_y, vel, yaw # note that yaw is in radians
+        # get yaw
+        orientation = currentPose.state.pose.orientation
+        quat = [orientation.x, orientation.y, orientation.z, orientation.w]
+        euler = quaternion_to_euler(quat)
+        yaw = euler[2]
+
+        #get vel
+        twist = currentPose.state.twist
+        vel_x = twist.linear.x
+        vel_y = twist.linear.y
+        # vel_z = twist.linear.z
+        vel = (vel_x ** 2 + vel_y ** 2) ** 0.5
+    else:
+        print("error detected")
+
+    ####################### TODO: Your Task 1 code ends Here #######################
+
+    return pos_x, pos_y, vel, yaw # note that yaw is in radians
 
 
     # Task 2: Longtitudal Controller
@@ -123,4 +145,5 @@ class vehicleController():
         
     def destroy(self):
         if self.own_node:
+
             self.node.destroy_node()
