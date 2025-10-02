@@ -74,8 +74,42 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        target_velocity = 10
+        # Velocity control based on upcoming path curvature
 
+        # Define velocity limits
+        max_velocity = 12.0  # Speed for straight sections (m/s)
+        min_velocity = 6.0   # Speed for sharp curves (m/s)
+
+        # Need at least 3 waypoints to estimate curvature
+        if len(future_unreached_waypoints) < 3:
+            target_velocity = min_velocity
+            return target_velocity
+
+        # Calculate heading change between consecutive waypoint segments
+        # This indicates how curved the upcoming path is
+        v1_x = future_unreached_waypoints[1][0] - future_unreached_waypoints[0][0]
+        v1_y = future_unreached_waypoints[1][1] - future_unreached_waypoints[0][1]
+
+        v2_x = future_unreached_waypoints[2][0] - future_unreached_waypoints[1][0]
+        v2_y = future_unreached_waypoints[2][1] - future_unreached_waypoints[1][1]
+
+        angle1 = math.atan2(v1_y, v1_x)
+        angle2 = math.atan2(v2_y, v2_x)
+
+        # Compute absolute heading change as curvature indicator
+        heading_change = abs(angle2 - angle1)
+        if heading_change > math.pi:
+            heading_change = 2 * math.pi - heading_change
+
+        # Velocity adjustment: straight path → max speed, curved path → reduced speed
+        curvature_threshold = math.radians(15)  # Threshold for considering path as curved
+
+        if heading_change < curvature_threshold:
+            target_velocity = max_velocity
+        else:
+            # Proportional reduction: sharper curves require lower speeds
+            velocity_reduction = (heading_change / math.pi) * (max_velocity - min_velocity)
+            target_velocity = max(min_velocity, max_velocity - velocity_reduction)
 
         ####################### TODO: Your TASK 2 code ends Here #######################
         return target_velocity
