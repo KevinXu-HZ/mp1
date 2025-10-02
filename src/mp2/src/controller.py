@@ -85,7 +85,7 @@ class vehicleController():
 
         # Pure logic - no artificial limits
         straight_speed = 100.0     # Speed for straight sections
-        curve_speed = 40.0         # Speed for curves
+        curve_speed = 30.0         # Speed for curves
         straight_threshold = math.radians(5)  # Heading change threshold
         decel_rate = 100.0  # Desired deceleration rate (m/s²)
 
