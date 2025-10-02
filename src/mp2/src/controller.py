@@ -81,15 +81,51 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        # Simple velocity control: just slow down for turns
+        # Optimized velocity control with look-ahead straight detection
 
-        max_velocity = 20.0  # Reduced from 12.0 for safety
-        min_velocity = 8.0   # Increased from 4.0 to maintain speed
+        # Pure logic - no artificial limits
+        straight_speed = 100.0     # Speed for straight sections
+        curve_speed = 40.0         # Speed for curves
+        straight_threshold = math.radians(5)  # Heading change threshold
+        decel_rate = 100.0  # Desired deceleration rate (m/s²)
 
-        # Calculate curvature from next 3 waypoints
-        if len(future_unreached_waypoints) < 7:
-            target_velocity = min_velocity
+        # Calculate braking distance: d = (v_straight² - v_curve²) / (2 × a)
+        braking_anticipation = (straight_speed**2 - curve_speed**2) / (2 * decel_rate)
+
+        if len(future_unreached_waypoints) < 3:
+            target_velocity = curve_speed
         else:
+            # 1. Scan ahead to detect straight sections and upcoming curves
+            straight_distance = 0.0
+            curve_detected = False
+
+            # Look ahead through waypoints
+            for i in range(min(len(future_unreached_waypoints) - 2, 30)):  # Look ahead up to 30 waypoints
+                # Calculate heading change at this waypoint
+                v1_x = future_unreached_waypoints[i+1][0] - future_unreached_waypoints[i][0]
+                v1_y = future_unreached_waypoints[i+1][1] - future_unreached_waypoints[i][1]
+                v2_x = future_unreached_waypoints[i+2][0] - future_unreached_waypoints[i+1][0]
+                v2_y = future_unreached_waypoints[i+2][1] - future_unreached_waypoints[i+1][1]
+
+                angle1 = math.atan2(v1_y, v1_x)
+                angle2 = math.atan2(v2_y, v2_x)
+                heading_change = abs(angle2 - angle1)
+                if heading_change > math.pi:
+                    heading_change = 2 * math.pi - heading_change
+
+                # Calculate segment distance
+                segment_dist = math.sqrt(v1_x**2 + v1_y**2)
+
+                if heading_change < straight_threshold:
+                    # Still in straight section
+                    if not curve_detected:
+                        straight_distance += segment_dist
+                else:
+                    # Curve detected
+                    curve_detected = True
+                    break
+
+            # 2. Calculate current position's curvature for immediate speed adjustment
             v1_x = future_unreached_waypoints[1][0] - future_unreached_waypoints[0][0]
             v1_y = future_unreached_waypoints[1][1] - future_unreached_waypoints[0][1]
             v2_x = future_unreached_waypoints[2][0] - future_unreached_waypoints[1][0]
@@ -97,19 +133,31 @@ class vehicleController():
 
             angle1 = math.atan2(v1_y, v1_x)
             angle2 = math.atan2(v2_y, v2_x)
-            heading_change = abs(angle2 - angle1)
-            if heading_change > math.pi:
-                heading_change = 2 * math.pi - heading_change
+            current_heading_change = abs(angle2 - angle1)
+            if current_heading_change > math.pi:
+                current_heading_change = 2 * math.pi - current_heading_change
 
-            # Linear interpolation between min and max velocity
-            if heading_change < math.radians(10):
-                target_velocity = max_velocity
+            # 3. Simple decision: straight = fast, curve = slow
+            if current_heading_change < straight_threshold:
+                # Currently in straight
+                if curve_detected and straight_distance < braking_anticipation:
+                    # Curve approaching - slow down
+                    target_velocity = curve_speed
+                else:
+                    # Clear straight - full speed
+                    target_velocity = straight_speed
             else:
-                ratio = min(1.0, heading_change / math.pi)
-                target_velocity = max_velocity - ratio * (max_velocity - min_velocity)
+                # Currently in curve - slow speed
+                target_velocity = curve_speed
 
-        # Heavy smoothing to prevent acceleration spikes
-        alpha = 1  # Very low = very smooth transitions
+        # 4. Asymmetric smoothing: gradual acceleration, quick braking
+        if target_velocity > curr_vel:
+            # Accelerating - use heavy smoothing to prevent flipping
+            alpha = 0.01  # Very gradual acceleration
+        else:
+            # Braking - use lighter smoothing for responsive slowing
+            alpha = 1  # Faster braking response
+
         smoothed_velocity = alpha * target_velocity + (1 - alpha) * curr_vel
 
         ####################### TODO: Your TASK 2 code ends Here #######################
