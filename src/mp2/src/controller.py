@@ -22,11 +22,18 @@ class vehicleController():
     def __init__(self, node=None):
         self.node = Node('vehicle_controller')
         self.own_node = True
-            
+
         self.controlPub = self.node.create_publisher(AckermannDrive, "/ackermann_cmd", 1)
         self.prev_vel = 0
-        self.L = 1.75 
-        self.log_acceleration = False
+        self.L = 1.75
+        self.log_acceleration = True  # Enable logging for Problem 5
+
+        # Data logging for plots
+        self.time_data = []
+        self.acceleration_data = []
+        self.trajectory_x = []
+        self.trajectory_y = []
+        self.start_time = time.time()
 
        
 
@@ -74,45 +81,39 @@ class vehicleController():
     def longititudal_controller(self, curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints):
 
         ####################### TODO: Your TASK 2 code starts Here #######################
-        # Velocity control based on upcoming path curvature
+        # Simple velocity control: just slow down for turns
 
-        # Define velocity limits
-        max_velocity = 12.0  # Speed for straight sections (m/s)
-        min_velocity = 6.0   # Speed for sharp curves (m/s)
+        max_velocity = 20.0  # Reduced from 12.0 for safety
+        min_velocity = 8.0   # Increased from 4.0 to maintain speed
 
-        # Need at least 3 waypoints to estimate curvature
-        if len(future_unreached_waypoints) < 3:
+        # Calculate curvature from next 3 waypoints
+        if len(future_unreached_waypoints) < 7:
             target_velocity = min_velocity
-            return target_velocity
-
-        # Calculate heading change between consecutive waypoint segments
-        # This indicates how curved the upcoming path is
-        v1_x = future_unreached_waypoints[1][0] - future_unreached_waypoints[0][0]
-        v1_y = future_unreached_waypoints[1][1] - future_unreached_waypoints[0][1]
-
-        v2_x = future_unreached_waypoints[2][0] - future_unreached_waypoints[1][0]
-        v2_y = future_unreached_waypoints[2][1] - future_unreached_waypoints[1][1]
-
-        angle1 = math.atan2(v1_y, v1_x)
-        angle2 = math.atan2(v2_y, v2_x)
-
-        # Compute absolute heading change as curvature indicator
-        heading_change = abs(angle2 - angle1)
-        if heading_change > math.pi:
-            heading_change = 2 * math.pi - heading_change
-
-        # Velocity adjustment: straight path → max speed, curved path → reduced speed
-        curvature_threshold = math.radians(15)  # Threshold for considering path as curved
-
-        if heading_change < curvature_threshold:
-            target_velocity = max_velocity
         else:
-            # Proportional reduction: sharper curves require lower speeds
-            velocity_reduction = (heading_change / math.pi) * (max_velocity - min_velocity)
-            target_velocity = max(min_velocity, max_velocity - velocity_reduction)
+            v1_x = future_unreached_waypoints[1][0] - future_unreached_waypoints[0][0]
+            v1_y = future_unreached_waypoints[1][1] - future_unreached_waypoints[0][1]
+            v2_x = future_unreached_waypoints[2][0] - future_unreached_waypoints[1][0]
+            v2_y = future_unreached_waypoints[2][1] - future_unreached_waypoints[1][1]
+
+            angle1 = math.atan2(v1_y, v1_x)
+            angle2 = math.atan2(v2_y, v2_x)
+            heading_change = abs(angle2 - angle1)
+            if heading_change > math.pi:
+                heading_change = 2 * math.pi - heading_change
+
+            # Linear interpolation between min and max velocity
+            if heading_change < math.radians(10):
+                target_velocity = max_velocity
+            else:
+                ratio = min(1.0, heading_change / math.pi)
+                target_velocity = max_velocity - ratio * (max_velocity - min_velocity)
+
+        # Heavy smoothing to prevent acceleration spikes
+        alpha = 1  # Very low = very smooth transitions
+        smoothed_velocity = alpha * target_velocity + (1 - alpha) * curr_vel
 
         ####################### TODO: Your TASK 2 code ends Here #######################
-        return target_velocity
+        return smoothed_velocity
 
         
         
@@ -226,8 +227,14 @@ class vehicleController():
 
         curr_x, curr_y, curr_vel, curr_yaw = self.extract_vehicle_info(currentPose)
 
+        # Log data for plotting
         if self.log_acceleration:
             acceleration = (curr_vel - self.prev_vel) * 100  # Since we are running at 100Hz
+            current_time = time.time() - self.start_time
+            self.time_data.append(current_time)
+            self.acceleration_data.append(acceleration)
+            self.trajectory_x.append(curr_x)
+            self.trajectory_y.append(curr_y)
 
         target_velocity = self.longititudal_controller(curr_x, curr_y, curr_vel, curr_yaw, future_unreached_waypoints)
         target_steering = self.pure_pursuit_lateral_controller(curr_x, curr_y, curr_yaw, target_point, future_unreached_waypoints)
@@ -237,7 +244,7 @@ class vehicleController():
         newAckermannCmd.steering_angle = float(target_steering)
 
         self.controlPub.publish(newAckermannCmd)
-        
+
         # Store current velocity for next iteration
         self.prev_vel = curr_vel
 
@@ -249,8 +256,41 @@ class vehicleController():
             newAckermannCmd.steering_angle = 0.0
             self.controlPub.publish(newAckermannCmd)
             print("Controller: Stop command sent")
+
+            # Save logged data when stopping
+            if self.log_acceleration:
+                self.save_data()
         except Exception as e:
             print(f"Controller: Error sending stop command: {e}")
+
+    def save_data(self):
+        """Save logged data to files for plotting"""
+        import csv
+        import os
+
+        # Create data directory if it doesn't exist
+        data_dir = os.path.expanduser("~/mp2_data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Save acceleration data
+        accel_file = os.path.join(data_dir, "acceleration_data.csv")
+        with open(accel_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['time', 'acceleration'])
+            for t, a in zip(self.time_data, self.acceleration_data):
+                writer.writerow([t, a])
+
+        # Save trajectory data
+        traj_file = os.path.join(data_dir, "trajectory_data.csv")
+        with open(traj_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['x', 'y'])
+            for x, y in zip(self.trajectory_x, self.trajectory_y):
+                writer.writerow([x, y])
+
+        print(f"Data saved to {data_dir}")
+        print(f"  - {accel_file}")
+        print(f"  - {traj_file}")
         
     def destroy(self):
         if self.own_node:
